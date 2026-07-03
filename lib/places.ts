@@ -116,7 +116,7 @@ function mapGooglePlace(
   fallbackCategory?: CategoryId | "all",
 ): Place {
   const photoUrl = p.photos?.[0]
-    ? `https://places.googleapis.com/v1/${p.photos[0].name}/media?maxWidthPx=800&key=${apiKey}`
+    ? `/api/photo?ref=${encodeURIComponent(p.photos[0].name)}`
     : "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80";
 
   return {

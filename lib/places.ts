@@ -99,9 +99,9 @@ async function searchPlacesGoogle({ query, category }: SearchParams): Promise<Pl
   }
 
   const data = (await res.json()) as { places?: GooglePlace[] };
-  return (data.places ?? [])
-    .filter((p) => (p.formattedAddress ?? "").includes("Argentina"))
-    .map((p) => mapGooglePlace(p, apiKey, category));
+  // La restricción por zona (locationRestriction) ya limita a Buenos Aires,
+  // así que devolvemos todos los resultados que trae.
+  return (data.places ?? []).map((p) => mapGooglePlace(p, apiKey, category));
 }
 
 interface GooglePlace {

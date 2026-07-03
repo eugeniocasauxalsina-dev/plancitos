@@ -19,7 +19,10 @@ export interface SearchParams {
 const USE_REAL = process.env.NEXT_PUBLIC_USE_REAL_PLACES === "true";
 
 export async function searchPlaces(params: SearchParams): Promise<Place[]> {
-  if (USE_REAL && process.env.GOOGLE_PLACES_API_KEY) {
+  const hasQuery = (params.query ?? "").trim().length > 0;
+  // Con texto de búsqueda usamos Google (limitado a Buenos Aires).
+  // Sin texto, mostramos la lista curada de Plancitos.
+  if (USE_REAL && process.env.GOOGLE_PLACES_API_KEY && hasQuery) {
     return searchPlacesGoogle(params);
   }
   return searchPlacesMock(params);
@@ -78,10 +81,11 @@ async function searchPlacesGoogle({ query, category }: SearchParams): Promise<Pl
       textQuery,
       languageCode: "es",
       regionCode: "AR",
-      locationBias: {
-        circle: {
-          center: { latitude: -34.6037, longitude: -58.3816 },
-          radius: 15000,
+      // Restricción DURA a Buenos Aires: descarta resultados de otras ciudades/países.
+      locationRestriction: {
+        rectangle: {
+          low: { latitude: -34.80, longitude: -58.60 },
+          high: { latitude: -34.45, longitude: -58.28 },
         },
       },
     }),
@@ -95,7 +99,9 @@ async function searchPlacesGoogle({ query, category }: SearchParams): Promise<Pl
   }
 
   const data = (await res.json()) as { places?: GooglePlace[] };
-  return (data.places ?? []).map((p) => mapGooglePlace(p, apiKey, category));
+  return (data.places ?? [])
+    .filter((p) => (p.formattedAddress ?? "").includes("Argentina"))
+    .map((p) => mapGooglePlace(p, apiKey, category));
 }
 
 interface GooglePlace {

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Providers from "./providers";
+import Header from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "Plancitos · Descubrí Buenos Aires",
@@ -14,7 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <Providers>
+          <Header />
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

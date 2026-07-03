@@ -36,8 +36,9 @@ export default function Home() {
 
   const heading = useMemo(() => {
     if (loading) return "Buscando...";
-    return `${places.length} ${places.length === 1 ? "lugar" : "lugares"}`;
-  }, [loading, places.length]);
+    const label = `${places.length} ${places.length === 1 ? "lugar" : "lugares"}`;
+    return debouncedQuery.trim() ? label : `Recomendados de Plancitos · ${label}`;
+  }, [loading, places.length, debouncedQuery]);
 
   return (
     <main className="min-h-screen">

@@ -1,5 +1,8 @@
+"use client";
+
 import type { Place, CategoryId } from "@/lib/types";
 import { categoryLabel } from "@/lib/categories";
+import { useFavorites } from "@/lib/favorites";
 
 function priceTag(level?: number) {
   if (level === undefined) return null;
@@ -19,6 +22,8 @@ const BANNER: Record<CategoryId, { emoji: string; bg: string }> = {
 export default function PlaceCard({ place }: { place: Place }) {
   const price = priceTag(place.priceLevel);
   const banner = BANNER[place.category];
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const fav = isFavorite(place.id);
 
   return (
     <article className="group overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
@@ -39,12 +44,24 @@ export default function PlaceCard({ place }: { place: Place }) {
             {banner?.emoji ?? "📍"}
           </div>
         )}
+
         <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-neutral-700 backdrop-blur">
           {categoryLabel(place.category)}
         </span>
+
+        <button
+          onClick={() => toggleFavorite(place)}
+          aria-label={fav ? "Quitar de favoritos" : "Guardar en favoritos"}
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lg shadow-sm backdrop-blur transition hover:scale-110"
+        >
+          <span className={fav ? "text-rose-500" : "text-neutral-400"}>
+            {fav ? "❤" : "🤍"}
+          </span>
+        </button>
+
         {place.openNow !== undefined && (
           <span
-            className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium ${
+            className={`absolute bottom-3 left-3 rounded-full px-2.5 py-1 text-xs font-medium ${
               place.openNow ? "bg-emerald-500 text-white" : "bg-neutral-800/80 text-white"
             }`}
           >
@@ -55,9 +72,7 @@ export default function PlaceCard({ place }: { place: Place }) {
 
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold leading-tight text-neutral-900">
-            {place.name}
-          </h3>
+          <h3 className="font-semibold leading-tight text-neutral-900">{place.name}</h3>
           {place.rating > 0 && (
             <div className="flex shrink-0 items-center gap-1 text-sm">
               <span className="text-amber-500">&#9733;</span>
@@ -78,19 +93,11 @@ export default function PlaceCard({ place }: { place: Place }) {
           </p>
         )}
 
-        {place.description && (
-          <p className="mt-2 line-clamp-2 text-sm text-neutral-600">
-            {place.description}
-          </p>
-        )}
-
         {(place.address || price) && (
           <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-3">
             <span className="truncate text-xs text-neutral-500">{place.address}</span>
             {price && (
-              <span className="ml-2 shrink-0 text-xs font-medium text-teal-700">
-                {price}
-              </span>
+              <span className="ml-2 shrink-0 text-xs font-medium text-teal-700">{price}</span>
             )}
           </div>
         )}

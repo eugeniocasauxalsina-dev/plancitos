@@ -9,6 +9,9 @@ export const metadata: Metadata = {
     "Encontrá cafés, bares, restaurantes, parques y museos en Buenos Aires.",
 };
 
+// Script que corre ANTES de pintar: evita el parpadeo del modo oscuro.
+const themeScript = `(function(){try{var t=localStorage.getItem('plancitos_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: {
@@ -16,6 +19,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>
         <Providers>
           <Header />

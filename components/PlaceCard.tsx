@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import type { Place, CategoryId } from "@/lib/types";
 import { categoryLabel } from "@/lib/categories";
 import { useFavorites } from "@/lib/favorites";
+import { detailId } from "@/lib/placeId";
+import ShareButton from "@/components/ShareButton";
 
 function priceTag(level?: number) {
   if (level === undefined) return null;
@@ -19,6 +22,15 @@ const BANNER: Record<CategoryId, { emoji: string; bg: string }> = {
   shopping: { emoji: "🛍️", bg: "#ffedd5" },
 };
 
+// Guarda el lugar para que la página de detalle lo muestre al instante.
+function stash(place: Place) {
+  try {
+    sessionStorage.setItem(`plancitos_place_${detailId(place)}`, JSON.stringify(place));
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function PlaceCard({ place }: { place: Place }) {
   const price = priceTag(place.priceLevel);
   const banner = BANNER[place.category];
@@ -26,82 +38,101 @@ export default function PlaceCard({ place }: { place: Place }) {
   const fav = isFavorite(place.id);
 
   return (
-    <article className="group overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-      <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
-        {place.photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={place.photoUrl}
-            alt={place.name}
-            loading="lazy"
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div
-            className="flex h-full w-full items-center justify-center text-5xl"
-            style={{ background: banner?.bg ?? "#f3f4f6" }}
-          >
-            {banner?.emoji ?? "📍"}
-          </div>
-        )}
-
-        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-neutral-700 backdrop-blur">
-          {categoryLabel(place.category)}
-        </span>
-
-        <button
-          onClick={() => toggleFavorite(place)}
-          aria-label={fav ? "Quitar de favoritos" : "Guardar en favoritos"}
-          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lg shadow-sm backdrop-blur transition hover:scale-110"
-        >
-          <span className={fav ? "text-rose-500" : "text-neutral-400"}>
-            {fav ? "❤" : "🤍"}
-          </span>
-        </button>
-
-        {place.openNow !== undefined && (
-          <span
-            className={`absolute bottom-3 left-3 rounded-full px-2.5 py-1 text-xs font-medium ${
-              place.openNow ? "bg-emerald-500 text-white" : "bg-neutral-800/80 text-white"
-            }`}
-          >
-            {place.openNow ? "Abierto" : "Cerrado"}
-          </span>
-        )}
-      </div>
-
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold leading-tight text-neutral-900">{place.name}</h3>
-          {place.rating > 0 && (
-            <div className="flex shrink-0 items-center gap-1 text-sm">
-              <span className="text-amber-500">&#9733;</span>
-              <span className="font-medium">{place.rating.toFixed(1)}</span>
+    <Link
+      href={`/lugar/${encodeURIComponent(detailId(place))}`}
+      onClick={() => stash(place)}
+      className="group block overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+    >
+      <article>
+        <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+          {place.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={place.photoUrl}
+              alt={place.name}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div
+              className="flex h-full w-full items-center justify-center text-5xl"
+              style={{ background: banner?.bg ?? "#f3f4f6" }}
+            >
+              {banner?.emoji ?? "📍"}
             </div>
+          )}
+
+          <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-neutral-700 backdrop-blur dark:bg-neutral-800/90 dark:text-neutral-200">
+            {categoryLabel(place.category)}
+          </span>
+
+          <div className="absolute right-3 top-3 flex items-center gap-2">
+            <ShareButton place={place} />
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleFavorite(place);
+              }}
+              aria-label={fav ? "Quitar de favoritos" : "Guardar en favoritos"}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lg shadow-sm backdrop-blur transition hover:scale-110 dark:bg-neutral-800/90"
+            >
+              <span className={fav ? "text-rose-500" : "text-neutral-400"}>
+                {fav ? "❤" : "🤍"}
+              </span>
+            </button>
+          </div>
+
+          {place.openNow !== undefined && (
+            <span
+              className={`absolute bottom-3 left-3 rounded-full px-2.5 py-1 text-xs font-medium ${
+                place.openNow ? "bg-emerald-500 text-white" : "bg-neutral-800/80 text-white"
+              }`}
+            >
+              {place.openNow ? "Abierto" : "Cerrado"}
+            </span>
           )}
         </div>
 
-        {(place.neighborhood || place.userRatingsTotal > 0) && (
-          <p className="mt-0.5 text-sm text-neutral-500">
-            {place.neighborhood}
-            {place.userRatingsTotal > 0 && (
-              <span className="text-neutral-400">
-                {" · "}
-                {place.userRatingsTotal.toLocaleString("es-AR")} reseñas
-              </span>
-            )}
-          </p>
-        )}
-
-        {(place.address || price) && (
-          <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-3">
-            <span className="truncate text-xs text-neutral-500">{place.address}</span>
-            {price && (
-              <span className="ml-2 shrink-0 text-xs font-medium text-teal-700">{price}</span>
+        <div className="p-4">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-semibold leading-tight text-neutral-900 dark:text-neutral-100">
+              {place.name}
+            </h3>
+            {place.rating > 0 && (
+              <div className="flex shrink-0 items-center gap-1 text-sm">
+                <span className="text-amber-500">&#9733;</span>
+                <span className="font-medium dark:text-neutral-100">{place.rating.toFixed(1)}</span>
+              </div>
             )}
           </div>
-        )}
-      </div>
-    </article>
+
+          {(place.neighborhood || place.userRatingsTotal > 0) && (
+            <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+              {place.neighborhood}
+              {place.userRatingsTotal > 0 && (
+                <span className="text-neutral-400 dark:text-neutral-500">
+                  {" · "}
+                  {place.userRatingsTotal.toLocaleString("es-AR")} reseñas
+                </span>
+              )}
+            </p>
+          )}
+
+          {(place.address || price) && (
+            <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-3 dark:border-neutral-800">
+              <span className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+                {place.address}
+              </span>
+              {price && (
+                <span className="ml-2 shrink-0 text-xs font-medium text-teal-700 dark:text-teal-400">
+                  {price}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </article>
+    </Link>
   );
 }
